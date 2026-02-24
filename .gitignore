@@ -1,0 +1,28 @@
+# Data
+data/raw/
+data/processed/
+
+# Model checkpoints
+BestModel/model/
+*.pt
+*.bin
+*.safetensors
+*.ckpt
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
