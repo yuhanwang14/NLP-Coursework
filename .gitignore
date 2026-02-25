@@ -9,6 +9,10 @@ BestModel/model/
 *.safetensors
 *.ckpt
 
+# Training artifacts
+training_log.txt
+baseline_dev_preds.txt
+
 # Python
 __pycache__/
 *.pyc

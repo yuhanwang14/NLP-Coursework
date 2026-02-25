@@ -1,9 +1,11 @@
-# Lightweight (local) dependencies
+# Core
 pandas>=2.0
 matplotlib>=3.7
 scikit-learn>=1.3
 
-# GPU-heavy dependencies (install on remote machine)
-# torch>=2.0
-# transformers>=4.35
-# datasets>=2.14
+# GPU / Transformer dependencies
+torch>=2.0
+transformers>=4.35
+datasets>=2.14
+accelerate>=0.25
+simpletransformers>=0.64
