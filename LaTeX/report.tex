@@ -198,11 +198,13 @@ The paper makes three principal contributions:
     hyperparameter tuning for the larger model, or training instability.
     This omission weakens the experimental narrative.
 
-    \item \textbf{No cross-validation or statistical significance testing.}
+    \item \textbf{No statistical significance testing.}
     Results are reported from single runs without confidence intervals,
     standard deviations over multiple seeds, or significance tests.
-    Given the small positive class (995 examples), variance across
-    random initialisations could be substantial.
+    Although the paper uses 10-fold cross-validation for its experiments,
+    no error bars or variance estimates are reported. Given the small
+    positive class (995 examples), variance across random initialisations
+    could be substantial.
 \end{enumerate}
 
 
@@ -302,8 +304,9 @@ more factual, policy-oriented, and statistical language.
 
 \subsubsection{Impact Statement}
 The text length analysis supports our choice of \textbf{max sequence length
-= 256 tokens}, which captures the vast majority of paragraphs without
-excessive padding. The n-gram analysis confirms that surface-level lexical
+= 256 tokens}, which captures over 97\% of paragraphs without
+excessive padding (measured by tokenising the full training set with the
+RoBERTa tokeniser). The n-gram analysis confirms that surface-level lexical
 features carry some discriminative signal, but the overlap between classes
 motivates using \textbf{contextualised representations} (transformer models)
 rather than bag-of-words approaches.
@@ -336,7 +339,8 @@ Training epochs & 1 & Up to 8 (early stopping) \\
 Negative downsampling & 2:1 (neg:pos) & 5:1 (neg:pos) \\
 Loss function & Standard CE & Class-weighted CE ($w_1 = 2.0$) \\
 Max sequence length & 128 & 256 \\
-Early stopping & None & Patience 3 on dev F1 \\
+Early stopping & None & Patience 3 on internal val F1 \\
+Validation split & N/A & 15\% stratified from train \\
 Batch size & 16 & 8 (due to model size) \\
 Learning rate & $2 \times 10^{-5}$ & $2 \times 10^{-5}$ \\
 Weight decay & -- & 0.01 \\
@@ -359,8 +363,11 @@ Warmup ratio & -- & 0.1 \\
           to 256 tokens allows the model to capture full paragraph context,
           motivated by EDA finding that PCL texts tend to be longer.
     \item \textbf{Extended training with regularisation:} Training for up to
-          8 epochs with early stopping (patience 3 on dev F1) allows the
-          model to converge properly while preventing overfitting.
+          8 epochs with early stopping (patience 3 on internal validation
+          F1) allows the model to converge properly while preventing
+          overfitting. Crucially, we hold out 15\% of the training data
+          as an internal validation split for model selection, ensuring
+          that the official dev set remains a clean held-out evaluation.
 \end{enumerate}
 
 % ── Rationale & Expected Outcome (2 marks) ───────────────────────────────────
@@ -415,7 +422,8 @@ python BestModel/train.py --model roberta-large \
                           --lr 2e-5 \
                           --neg_ratio 5.0 \
                           --pos_weight 2.0 \
-                          --patience 3
+                          --patience 3 \
+                          --val_fraction 0.15
 \end{verbatim}
 
 Repository link: \url{https://github.com/yuhanwang14/NLP-Coursework}

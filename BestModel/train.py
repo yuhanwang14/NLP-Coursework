@@ -5,7 +5,8 @@ Train a binary PCL classifier by fine-tuning a pretrained transformer.
 Hybrid approach:
     - Moderate downsampling (configurable neg/pos ratio)
     - Mild class weighting in loss
-    - Validate on REAL dev set (true F1, no distribution mismatch)
+    - Validate on INTERNAL dev split (held out from training data)
+    - Final evaluation on official dev set (clean held-out result)
 
 Usage:
     source .venv/bin/activate
@@ -25,6 +26,7 @@ from transformers import (
     EarlyStoppingCallback,
 )
 from sklearn.metrics import f1_score, precision_score, recall_score
+from sklearn.model_selection import train_test_split
 
 from BestModel.dataset import PCLDataset, load_split
 
@@ -84,6 +86,8 @@ def main():
                         help="Ratio of negatives to positives after downsampling")
     parser.add_argument("--pos_weight", type=float, default=2.0,
                         help="Weight for positive class in loss function")
+    parser.add_argument("--val_fraction", type=float, default=0.15,
+                        help="Fraction of training data held out for internal validation")
     args = parser.parse_args()
 
     torch.manual_seed(args.seed)
@@ -91,9 +95,21 @@ def main():
     print(f"Device: {'cuda' if torch.cuda.is_available() else 'cpu'}")
     print(f"Model: {args.model}")
 
-    # ---- Load & downsample training data ----
-    train_df = load_split("data/processed/train.csv")
+    # ---- Load training data ----
+    full_train_df = load_split("data/processed/train.csv")
+    print(f"Full train set: {len(full_train_df)} examples")
 
+    # ---- Split into train_internal + val_internal (BEFORE downsampling) ----
+    train_df, val_df = train_test_split(
+        full_train_df,
+        test_size=args.val_fraction,
+        random_state=args.seed,
+        stratify=full_train_df["label"],
+    )
+    print(f"Internal train: {len(train_df)} (pos={train_df.label.sum()}, neg={len(train_df)-train_df.label.sum()})")
+    print(f"Internal val:   {len(val_df)} (pos={val_df.label.sum()}, neg={len(val_df)-val_df.label.sum()})")
+
+    # ---- Downsample negatives in train_internal only ----
     pos_df = train_df[train_df.label == 1]
     neg_df = train_df[train_df.label == 0]
     n_pos = len(pos_df)
@@ -104,16 +120,12 @@ def main():
         .sample(frac=1, random_state=args.seed)
         .reset_index(drop=True)
     )
-    print(f"Train: {len(train_bal)} (pos={n_pos}, neg={n_neg_keep}, ratio=1:{n_neg_keep/n_pos:.1f})")
-
-    # ---- Real dev set for validation ----
-    dev_df = load_split("data/processed/dev.csv")
-    print(f"Dev:   {len(dev_df)} (pos={dev_df.label.sum()}, neg={len(dev_df)-dev_df.label.sum()})")
+    print(f"Train (downsampled): {len(train_bal)} (pos={n_pos}, neg={n_neg_keep}, ratio=1:{n_neg_keep/n_pos:.1f})")
 
     # ---- Tokenize ----
     tokenizer = AutoTokenizer.from_pretrained(args.model)
     train_ds = PCLDataset(train_bal["text"].tolist(), train_bal["label"].values.astype(int), tokenizer, args.max_len)
-    dev_ds = PCLDataset(dev_df["text"].tolist(), dev_df["label"].values.astype(int), tokenizer, args.max_len)
+    val_ds = PCLDataset(val_df["text"].tolist(), val_df["label"].values.astype(int), tokenizer, args.max_len)
 
     # ---- Model ----
     model = AutoModelForSequenceClassification.from_pretrained(args.model, num_labels=2)
@@ -125,7 +137,7 @@ def main():
     class_weights = torch.tensor([1.0, args.pos_weight], dtype=torch.float)
     print(f"Class weights: {class_weights.tolist()}")
 
-    # ---- Training ----
+    # ---- Training (early stopping on INTERNAL val split) ----
     training_args = TrainingArguments(
         output_dir=os.path.join(args.output_dir, "checkpoints"),
         num_train_epochs=args.epochs,
@@ -151,7 +163,7 @@ def main():
         model=model,
         args=training_args,
         train_dataset=train_ds,
-        eval_dataset=dev_ds,
+        eval_dataset=val_ds,  # Internal validation split, NOT the official dev set
         compute_metrics=compute_metrics,
         callbacks=[EarlyStoppingCallback(early_stopping_patience=args.patience)],
     )
@@ -162,8 +174,16 @@ def main():
     trainer.save_model(args.output_dir)
     tokenizer.save_pretrained(args.output_dir)
 
-    results = trainer.evaluate()
-    print(f"\nFinal dev results: {results}")
+    # ---- Report internal val results ----
+    val_results = trainer.evaluate()
+    print(f"\nInternal val results: {val_results}")
+
+    # ---- Final clean evaluation on OFFICIAL dev set ----
+    dev_df = load_split("data/processed/dev.csv")
+    dev_ds = PCLDataset(dev_df["text"].tolist(), dev_df["label"].values.astype(int), tokenizer, args.max_len)
+    dev_results = trainer.evaluate(dev_ds)
+    print(f"\n*** Official dev results (clean held-out): {dev_results}")
+    print(f"*** Official Dev F1: {dev_results['eval_f1']:.4f}")
     print(f"Model saved to: {args.output_dir}")
 
 
