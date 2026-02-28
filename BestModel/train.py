@@ -75,19 +75,21 @@ def compute_metrics(eval_pred):
 def main():
     parser = argparse.ArgumentParser(description="Train PCL classifier")
     parser.add_argument("--model", default="roberta-large")
-    parser.add_argument("--lr", type=float, default=2e-5)
+    parser.add_argument("--lr", type=float, default=1e-5)
     parser.add_argument("--epochs", type=int, default=8)
     parser.add_argument("--batch_size", type=int, default=8)
     parser.add_argument("--max_len", type=int, default=256)
     parser.add_argument("--patience", type=int, default=3)
     parser.add_argument("--output_dir", default="BestModel/model")
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--neg_ratio", type=float, default=5.0,
+    parser.add_argument("--neg_ratio", type=float, default=3.0,
                         help="Ratio of negatives to positives after downsampling")
-    parser.add_argument("--pos_weight", type=float, default=2.0,
+    parser.add_argument("--pos_weight", type=float, default=3.0,
                         help="Weight for positive class in loss function")
     parser.add_argument("--val_fraction", type=float, default=0.15,
                         help="Fraction of training data held out for internal validation")
+    parser.add_argument("--gradient_accumulation", type=int, default=2,
+                        help="Gradient accumulation steps (effective batch = batch_size * this)")
     args = parser.parse_args()
 
     torch.manual_seed(args.seed)
@@ -143,9 +145,10 @@ def main():
         num_train_epochs=args.epochs,
         per_device_train_batch_size=args.batch_size,
         per_device_eval_batch_size=args.batch_size * 2,
+        gradient_accumulation_steps=args.gradient_accumulation,
         learning_rate=args.lr,
         weight_decay=0.01,
-        warmup_ratio=0.1,
+        warmup_ratio=0.06,
         eval_strategy="epoch",
         save_strategy="epoch",
         load_best_model_at_end=True,

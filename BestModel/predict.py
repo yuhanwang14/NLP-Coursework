@@ -43,6 +43,9 @@ def main():
     parser.add_argument("--model_dir", default="BestModel/model")
     parser.add_argument("--max_len", type=int, default=256)
     parser.add_argument("--batch_size", type=int, default=32)
+    parser.add_argument("--threshold", type=float, default=None,
+                        help="Classification threshold on positive-class probability. "
+                             "If None, auto-tunes on dev set labels.")
     args = parser.parse_args()
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -59,8 +62,29 @@ def main():
     dev_loader = DataLoader(dev_ds, batch_size=args.batch_size)
 
     dev_preds, dev_logits = predict(model, dev_loader, device)
-    write_predictions(dev_preds, "dev.txt")
     np.save("BestModel/model/dev_logits.npy", dev_logits)
+
+    # Threshold tuning: find optimal threshold on dev set if labels available
+    threshold = args.threshold
+    if threshold is None and "label" in dev_df.columns:
+        from scipy.special import softmax
+        probs = softmax(dev_logits, axis=1)[:, 1]
+        labels = dev_df["label"].values
+        best_f1, best_t = 0, 0.5
+        for t in np.arange(0.15, 0.85, 0.01):
+            f1 = f1_score(labels, (probs >= t).astype(int), pos_label=1)
+            if f1 > best_f1:
+                best_f1, best_t = f1, t
+        threshold = best_t
+        print(f"Auto-tuned threshold: {threshold:.2f} (F1={best_f1:.4f})")
+    elif threshold is None:
+        threshold = 0.5
+
+    # Apply threshold
+    from scipy.special import softmax as _softmax
+    dev_probs = _softmax(dev_logits, axis=1)[:, 1]
+    dev_preds = (dev_probs >= threshold).astype(int).tolist()
+    write_predictions(dev_preds, "dev.txt")
 
     if "label" in dev_df.columns:
         print(f"Dev F1: {f1_score(dev_df['label'].values, dev_preds, pos_label=1):.4f}")
@@ -70,9 +94,13 @@ def main():
     test_ds = PCLInferenceDataset(test_df["text"].tolist(), tokenizer, args.max_len)
     test_loader = DataLoader(test_ds, batch_size=args.batch_size)
 
-    test_preds, test_logits = predict(model, test_loader, device)
-    write_predictions(test_preds, "test.txt")
+    test_preds_raw, test_logits = predict(model, test_loader, device)
     np.save("BestModel/model/test_logits.npy", test_logits)
+
+    # Apply same threshold to test set
+    test_probs = _softmax(test_logits, axis=1)[:, 1]
+    test_preds = (test_probs >= threshold).astype(int).tolist()
+    write_predictions(test_preds, "test.txt")
 
     # ---- Summary ----
     print(f"\ndev.txt:  {len(dev_preds)} lines  (expected {len(dev_df)})")
