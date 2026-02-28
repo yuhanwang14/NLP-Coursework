@@ -50,21 +50,16 @@
 \centering
 \vspace*{3cm}
 
-{\LARGE\bfseries Detecting Patronizing and Condescending Language\\[0.3em]
-in News Paragraphs}
-
-\vspace{1.5cm}
-
-{\Large NLP Coursework 2026}
-
-\vspace{1cm}
-
-{\large SemEval-2022 Task 4, Subtask 1 — Binary PCL Classification}
+{\LARGE\bfseries Natural Language Processing Coursework 2026}
 
 \vspace{2cm}
 
+{\Large Yuhan Wang}
+
+\vspace{1.5cm}
+
 \begin{tabular}{rl}
-    \textbf{Leaderboard Name:} & \texttt{YOUR\_NAME\_HERE} \\[0.5em]
+    \textbf{Leaderboard Name:} & \texttt{YuhanWang} \\[0.5em]
     \textbf{GitHub Repository:} & \url{https://github.com/yuhanwang14/NLP-Coursework} \\[0.5em]
     \textbf{Model:} & RoBERTa-large \\[0.5em]
     \textbf{Dev F1:} & 0.5747 \\
@@ -124,10 +119,10 @@ The paper makes three principal contributions:
     binary detection task (Task~1).
 
     \item \textbf{Benchmark experiments.}
-    The paper evaluates several baselines---SVM with TF-IDF/Word2Vec,
-    BiLSTM, and transformer models (BERT, RoBERTa, DistilBERT)---on both
-    tasks, establishing that RoBERTa achieves the best F1 of 0.706 on binary
-    detection. This provides a reference point for subsequent research.
+    The paper evaluates baselines including SVM (TF-IDF and Word2Vec)
+    and BiLSTM, as well as transformer models (BERT, RoBERTa,
+    DistilBERT) on both tasks. RoBERTa achieves the best F1 of 0.706
+    on binary detection, providing a reference for subsequent work.
 \end{enumerate}
 
 % ── Q2: Technical Strengths (2 marks) ────────────────────────────────────────
@@ -181,11 +176,11 @@ The paper makes three principal contributions:
     calibration sessions in depth.
 
     \item \textbf{Severe class imbalance without adequate mitigation.}
-    Only 9.4\% of paragraphs (995/10,637) are labelled as PCL, yet the
-    authors do not experiment with standard imbalance-handling
+    Only 9.4\% of paragraphs (995 of 10,637) are labelled as PCL, yet
+    the authors do not experiment with standard imbalance-handling
     techniques such as oversampling, class-weighted losses, or focal
-    loss. The benchmark results may thus understate what is achievable
-    with proper imbalance handling.
+    loss. The results may thus understate what is achievable with
+    proper imbalance handling.
 
     \item \textbf{Limited exploration of contextual factors.}
     PCL is inherently context-dependent---the same sentence may be
@@ -570,7 +565,7 @@ targeted data augmentation for under-performing groups.
 
 \begin{itemize}[leftmargin=*]
     \item \textbf{Repository:} \url{https://github.com/yuhanwang14/NLP-Coursework}
-    \item \textbf{Leaderboard name:} \texttt{YOUR\_NAME\_HERE}
+    \item \textbf{Leaderboard name:} \texttt{YuhanWang}
     \item The repository contains a clear \texttt{README.md} with
           reproduction instructions, well-structured code in
           \texttt{BestModel/}, and documented EDA and evaluation scripts.

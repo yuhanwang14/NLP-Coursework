@@ -1,82 +1,95 @@
-# PCL Binary Classification — SemEval 2022 Task 4, Subtask 1
+# Natural Language Processing Coursework 2026
 
-Detecting Patronizing and Condescending Language (PCL) in news paragraphs.
+**Yuhan Wang** | Leaderboard: `YuhanWang`
 
-- **Paper**: [Perez-Almendros et al. (2020)](https://aclanthology.org/2020.coling-main.518/)
-- **Task**: [SemEval 2022 Task 4](https://sites.google.com/view/pcl-detection-semeval2022/)
-- **Baseline Colab**: [RoBERTa-base baseline](https://colab.research.google.com/drive/1M5Qx-FVJYNqFdvpJgggIZaWk5SpGS1Nu)
-- **EdStem**: [Course discussion](https://edstem.org/us/courses/86588/discussion)
-
-## Quick Start
+## Setup
 
 ```bash
-# 1. Create venv and install dependencies
-python3 -m venv .venv
-source .venv/bin/activate
+git clone https://github.com/yuhanwang14/NLP-Coursework.git
+cd NLP-Coursework
+python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-
-# 2. Download and prepare data
+pip install torch transformers datasets scikit-learn
 python data/download.py
+```
 
-# 3. Run EDA (Exercise 2)
+## Reproduce
+
+### Exercise 2 — EDA
+
+```bash
 python notebooks/eda.py
+# → notebooks/figures/class_distribution.png
+# → notebooks/figures/pcl_rate_by_keyword.png
+# → notebooks/figures/text_length.png
+# → notebooks/figures/top_bigrams.png
+```
 
-# 4. Reproduce baseline
+### Exercise 4 — Model Training (GPU required)
+
+**Baseline reproduction** (~15 min on T4):
+```bash
 python BestModel/run_baseline.py
+# → baseline_dev_preds.txt  (expected F1 ≈ 0.46)
+```
 
-# 5. Train model (GPU required, ~80 min on T4)
-python BestModel/train.py
+**Our model** — fine-tune RoBERTa-large (~80 min on T4):
+```bash
+python BestModel/train.py \
+    --model roberta-large \
+    --batch_size 8 \
+    --epochs 8 \
+    --lr 2e-5 \
+    --neg_ratio 5.0 \
+    --pos_weight 2.0 \
+    --patience 3
+# → BestModel/model/  (saved checkpoint)
+```
 
-# 6. Generate predictions
+### Exercise 5.1 — Generate Predictions
+
+```bash
 python BestModel/predict.py
+# → dev.txt   (2,094 predictions, F1 = 0.5747)
+# → test.txt  (3,832 predictions)
+```
 
-# 7. Run error analysis (Exercise 5.2)
+### Exercise 5.2 — Error Analysis
+
+```bash
 python notebooks/evaluation.py
+# → notebooks/figures/confusion_matrix.png
+# → notebooks/figures/model_vs_baseline.png
+# → notebooks/figures/pr_curve.png
+# → notebooks/figures/per_keyword_f1.png
 ```
 
 ## Repo Structure
 
 ```
-├── data/
-│   ├── download.py              # Download & prepare dataset
-│   ├── raw/                     # Cloned repos (gitignored)
-│   └── processed/               # Clean train/dev/test CSVs (gitignored)
 ├── BestModel/
-│   ├── __init__.py              # Package init
-│   ├── dataset.py               # Shared Dataset classes & utils
-│   ├── train.py                 # Model training (Ex 4)
-│   ├── predict.py               # Inference → dev.txt, test.txt (Ex 5.1)
-│   ├── run_baseline.py          # RoBERTa-base baseline reproduction
-│   └── model/                   # Saved model weights (gitignored)
+│   ├── train.py             # Model training
+│   ├── predict.py           # Inference → dev.txt, test.txt
+│   ├── run_baseline.py      # RoBERTa-base baseline
+│   ├── dataset.py           # Dataset classes & utils
+│   └── model/               # Saved weights (gitignored)
+├── data/
+│   └── download.py          # Download & prepare dataset
 ├── notebooks/
-│   ├── eda.py                   # Exploratory Data Analysis (Ex 2)
-│   ├── evaluation.py            # Error analysis & local eval (Ex 5.2)
-│   └── figures/                 # Output plots
-├── dev.txt                      # Predictions on official dev set
-├── test.txt                     # Predictions on official test set
-├── requirements.txt
-└── README.md
+│   ├── eda.py               # Exploratory Data Analysis
+│   ├── evaluation.py        # Error analysis & local eval
+│   └── figures/             # Output plots
+├── LaTeX/
+│   ├── report.tex           # Coursework report
+│   └── references.bib       # BibTeX references
+├── dev.txt                  # Dev set predictions
+├── test.txt                 # Test set predictions
+└── baseline_dev_preds.txt   # Baseline predictions
 ```
 
-## Task Summary
+## Results
 
-| Item | Details |
-|------|---------| 
-| Input | News paragraph text |
-| Output | `1` (PCL) or `0` (No PCL) |
-| Metric | F1 score (positive class) |
-| Baseline | RoBERTa-base → 0.46 dev |
-| **Our Model** | **RoBERTa-large → 0.575 dev** |
-| Data | [Main TSV](https://github.com/CRLala/NLPLabs-2024/tree/main/Dont_Patronize_Me_Trainingset), [Splits](https://github.com/Perez-AlmendrosC/dontpatronizeme/tree/master/semeval-2022/practice%20splits), [Test](https://github.com/Perez-AlmendrosC/dontpatronizeme/blob/master/semeval-2022/TEST/task4_test.tsv) |
-
-## Exercises (30 marks total)
-
-| Ex | Topic | Marks | Time |
-|----|-------|-------|------|
-| 1 | Critical Paper Review | 6 | 3h |
-| 2 | EDA (2 techniques) | 6 | 3h |
-| 3 | Proposed Approach | 4 | 2h |
-| 4 | Model Training + Repo | 1 | 8h |
-| 5.1 | Global Eval (dev.txt, test.txt) | 6 | 30m |
-| 5.2 | Local Eval (Error Analysis) | 5 | 3h |
-| 6 | Report & Repo Quality | 2 | 30m |
+| Model | Dev F1 |
+|-------|--------|
+| Baseline (RoBERTa-base) | 0.460 |
+| **Ours (RoBERTa-large)** | **0.5747** |
