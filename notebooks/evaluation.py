@@ -45,7 +45,7 @@ def error_analysis(dev_df, model_preds, baseline_preds):
     disp = ConfusionMatrixDisplay(cm, display_labels=["No PCL", "PCL"])
     fig, ax = plt.subplots(figsize=(6, 5))
     disp.plot(ax=ax, cmap="Blues", values_format="d")
-    ax.set_title("Confusion Matrix — DeBERTa-v3-base")
+    ax.set_title("Confusion Matrix — RoBERTa-large")
     fig.tight_layout()
     fig.savefig(os.path.join(FIG_DIR, "confusion_matrix.png"), dpi=150)
     plt.close(fig)

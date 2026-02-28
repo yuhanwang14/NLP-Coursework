@@ -104,16 +104,16 @@ The paper makes three principal contributions:
     organised into three archetypes:
     \begin{itemize}
         \item \textbf{The Saviour:} \emph{Unbalanced power relations}
-              (positioning oneself as superior), \emph{Presupposition}
-              (assuming/generalising without evidence), and \emph{Authority
+              (positioning oneself as superior) and \emph{Shallow solution}
+              (proposing simplistic fixes to systemic problems).
+        \item \textbf{The Expert:} \emph{Presupposition}
+              (assuming/generalising without evidence) and \emph{Authority
               voice} (speaking on behalf of the community).
         \item \textbf{The Poet:} \emph{Metaphor} (euphemistic or poetic
-              descriptions masking reality) and \emph{Compassion} (presenting
-              the community as pitiable through flowery language).
-        \item \textbf{The Critic:} \emph{Shallow solution} (proposing
-              simplistic fixes to systemic problems) and \emph{The poorer,
-              the merrier} (presenting vulnerability as positive or
-              admirable).
+              descriptions masking reality), \emph{Compassion} (presenting
+              the community as pitiable through flowery language), and
+              \emph{The poorer, the merrier} (presenting vulnerability as
+              positive or admirable).
     \end{itemize}
     This taxonomy enables multi-label classification (Task~2) beyond the
     binary detection task (Task~1).
@@ -213,9 +213,9 @@ The paper makes three principal contributions:
 \section{Exercise 2: Exploratory Data Analysis}
 \label{sec:ex2}
 
-We perform two EDA techniques on the training split of the
-\emph{Don't Patronize Me!} dataset to identify patterns that inform our
-modelling approach. Code: \texttt{notebooks/eda.py}.
+We perform two EDA techniques on the training split (8{,}375 paragraphs)
+of the \emph{Don't Patronize Me!} dataset to identify patterns that inform
+our modelling approach. Code: \texttt{notebooks/eda.py}.
 
 % ── Technique 1 ──────────────────────────────────────────────────────────────
 \subsection{Technique 1: Class Distribution Analysis}
@@ -238,13 +238,13 @@ proportion of paragraphs annotated as PCL.
 
 The dataset exhibits severe class imbalance: approximately 90.6\% of
 paragraphs are non-PCL (label 0) and only 9.4\% are PCL (label 1), yielding
-an imbalance ratio of roughly 9.7:1.
+an imbalance ratio of roughly 9.5:1.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{pcl_rate_by_keyword.png}
     \caption{PCL rate varies substantially across keyword groups. Some
-             communities (e.g.\ \emph{vulnerable}, \emph{in-need}) show
+             communities (e.g.\ \emph{homeless}, \emph{in-need}) show
              higher PCL prevalence than others (e.g.\ \emph{women}).}
     \label{fig:pcl_keyword}
 \end{figure}
@@ -339,11 +339,13 @@ Max sequence length & 128 & 256 \\
 Early stopping & None & Patience 3 on dev F1 \\
 Batch size & 16 & 8 (due to model size) \\
 Learning rate & $2 \times 10^{-5}$ & $2 \times 10^{-5}$ \\
+Weight decay & -- & 0.01 \\
+Warmup ratio & -- & 0.1 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\textbf{Key innovations over the baseline:}
+\textbf{Key deviations from the baseline:}
 \begin{enumerate}[leftmargin=*]
     \item \textbf{Larger model:} RoBERTa-large has 355M parameters vs.\
           RoBERTa-base's 125M, providing greater capacity to capture the
@@ -371,7 +373,7 @@ depending on framing and tone. The original paper's best result
 significantly outperform SVM and BiLSTM baselines. Scaling to
 RoBERTa-large provides additional representational capacity, while our
 hybrid imbalance strategy addresses the primary weakness of the original
-experiments (no class-weighting despite 9.7:1 imbalance).
+experiments (no class-weighting despite 9.5:1 imbalance).
 
 \textbf{Expected outcome.} We expected our approach to outperform the
 RoBERTa-base baseline (F1 $\approx$ 0.46 on the SemEval dev split) by a
@@ -443,13 +445,14 @@ Prediction files:
 \toprule
 \textbf{Model} & \textbf{Dev F1} & \textbf{Test F1} \\
 \midrule
-Baseline (RoBERTa-base) & 0.460 & 0.490 \\
+Baseline (RoBERTa-base)$^\dagger$ & 0.460 & 0.490 \\
 \textbf{Our model (RoBERTa-large)} & \textbf{0.5747} & \textbf{TBD}$^*$ \\
 \bottomrule
 \end{tabular}
 
 \medskip
-{\footnotesize $^*$Test F1 will be confirmed via leaderboard submission.}
+{\footnotesize $^\dagger$Reproduced independently using \texttt{BestModel/run\_baseline.py}. The coursework spec states F1 = 0.48 on dev; our reproduction yields 0.460, likely due to random seed differences in negative downsampling.\\
+$^*$Test F1 will be confirmed via leaderboard submission.}
 \end{table}
 
 % ── 5.2: Local Evaluation / Error Analysis (5 marks) ─────────────────────────
@@ -479,9 +482,12 @@ categorise the failure modes:
 \textbf{False Positive Themes:}
 \begin{itemize}[leftmargin=*]
     \item \textbf{Emotive but factual reporting:} Paragraphs using emotive
-          vocabulary to describe genuine hardship (e.g.\ ``struggling
-          families'') without actually being patronizing. The model
-          over-keys on sentiment-laden language.
+          vocabulary to describe genuine hardship without actually being
+          patronizing. The model over-keys on sentiment-laden language.
+          \emph{Example:} ``\emph{Is it the bad gas, the ZIKV, is it the
+          joblessness, the hopelessness, the poverty?}''---emotionally
+          charged but a direct critique of government, not condescension
+          towards a vulnerable group.
     \item \textbf{Advocacy language:} Paragraphs from advocacy organisations
           that sound compassionate but are empowering rather than
           condescending.
@@ -494,11 +500,19 @@ categorise the failure modes:
     \item \textbf{Subtle condescension:} The most common failure mode---
           paragraphs where the patronizing tone is implicit or conveyed
           through framing rather than explicit vocabulary.
+          \emph{Example:} ``\emph{His present `chambers' may be quite
+          humble, but Shiyani has the tiny space very neatly organized and
+          clean}''---the diminutive framing of a homeless person's living
+          conditions as admirably tidy is patronizing, but the surface
+          language is neutral/positive.
     \item \textbf{Shallow solutions:} Paragraphs proposing simplistic
           fixes (``they just need to...'') that require world knowledge
           to identify as patronizing.
     \item \textbf{Short texts:} Brief paragraphs lacking sufficient
           context for the model to detect PCL patterns.
+          \emph{Example:} ``\emph{Jesus is the Master Feminist because he
+          championed the cause of women}''---a short, reductive claim that
+          the model lacks context to classify.
 \end{itemize}
 
 % ── 5.2.3: Model vs Baseline ────────────────────────────────────────────────
@@ -525,18 +539,24 @@ from a few lucky predictions. 128 examples remain misclassified by both.
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.7\textwidth]{pr_curve.png}
-    \caption{Precision-recall curve with optimal threshold marked. The
-             optimal threshold deviates from the default 0.5, suggesting
-             room for improvement via threshold tuning.}
+    \caption{Precision-recall curve with optimal threshold marked.
+             The optimal F1-maximising threshold is 0.901, far above
+             the default 0.5.}
     \label{fig:pr}
 \end{figure}
 
 The precision-recall curve reveals the trade-off between precision and
 recall at different classification thresholds. The optimal threshold
-(maximising F1) is found to deviate from the default 0.5, indicating that
-threshold tuning could further improve performance. At the optimal
-threshold, we observe a modest F1 improvement over the default decision
-boundary.
+(maximising F1) is \textbf{0.901}, yielding F1 = 0.592 compared to 0.575
+at the default 0.5 boundary. The fact that the optimal threshold is so
+high indicates that the model's softmax probabilities are poorly
+calibrated: it assigns high confidence ($>$0.9) to most of its positive
+predictions, meaning a much higher threshold is needed to filter out
+uncertain cases. This suggests that probability calibration techniques
+(e.g.\ temperature scaling) could be beneficial. Note that our submitted
+\texttt{test.txt} predictions use the default 0.5 threshold, as the
+optimal threshold was determined post-hoc on the dev set and applying it
+to test predictions would risk overfitting to the dev distribution.
 
 % ── 5.2.5: Per-Keyword F1 ──────────────────────────────────────────────────
 \subsubsection{Per-Keyword F1 Breakdown}
@@ -567,8 +587,8 @@ targeted data augmentation for under-performing groups.
     \item \textbf{Repository:} \url{https://github.com/yuhanwang14/NLP-Coursework}
     \item \textbf{Leaderboard name:} \texttt{YuhanWang}
     \item The repository contains a clear \texttt{README.md} with
-          reproduction instructions, well-structured code in
-          \texttt{BestModel/}, and documented EDA and evaluation scripts.
+          full reproduction instructions, dependency list, and
+          step-by-step commands for training, prediction, and evaluation.
     \item Prediction files \texttt{dev.txt} and \texttt{test.txt} are in
           the repository root in the required format (one 0/1 per line).
 \end{itemize}
