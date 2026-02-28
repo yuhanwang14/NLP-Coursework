@@ -12,6 +12,15 @@ BestModel/model/
 # Training artifacts
 training_log.txt
 
+# LaTeX build artifacts
+LaTeX/*.aux
+LaTeX/*.log
+LaTeX/*.out
+LaTeX/*.synctex.gz
+LaTeX/*.toc
+LaTeX/*.bbl
+LaTeX/*.blg
+
 # Python
 __pycache__/
 *.pyc

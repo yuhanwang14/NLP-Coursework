@@ -36,6 +36,8 @@
 \lhead{PCL Binary Classification}
 \cfoot{\thepage}
 \renewcommand{\headrulewidth}{0.4pt}
+\setlength{\headheight}{13.6pt}
+\addtolength{\topmargin}{-1.6pt}
 
 % ── Graphics path ─────────────────────────────────────────────────────────────
 \graphicspath{{../notebooks/figures/}}
@@ -62,10 +64,10 @@ in News Paragraphs}
 \vspace{2cm}
 
 \begin{tabular}{rl}
-    \textbf{Leaderboard Name:} & \texttt{TODO\_LEADERBOARD} \\[0.5em]
-    \textbf{GitHub Repository:} & \url{https://github.com/TODO/NLP} \\[0.5em]
+    \textbf{Leaderboard Name:} & \texttt{YOUR\_NAME\_HERE} \\[0.5em]
+    \textbf{GitHub Repository:} & \url{https://github.com/yuhanwang14/NLP-Coursework} \\[0.5em]
     \textbf{Model:} & RoBERTa-large \\[0.5em]
-    \textbf{Dev F1:} & 0.575 \\
+    \textbf{Dev F1:} & 0.5747 \\
 \end{tabular}
 
 \vfill
@@ -377,12 +379,12 @@ hybrid imbalance strategy addresses the primary weakness of the original
 experiments (no class-weighting despite 9.7:1 imbalance).
 
 \textbf{Expected outcome.} We expected our approach to outperform the
-RoBERTa-base baseline (F1 $\approx $ 0.48 on the SemEval dev split) by a
+RoBERTa-base baseline (F1 $\approx$ 0.46 on the SemEval dev split) by a
 substantial margin. The combination of a larger model, better imbalance
 handling, and longer context should yield improved recall on the minority
 class without catastrophic precision drops.
 
-\textbf{Actual result:} Dev F1 = \textbf{0.575}, a +0.095 improvement over
+\textbf{Actual result:} Dev F1 = \textbf{0.5747}, a +0.115 improvement over
 the baseline, confirming that the larger model and hybrid training strategy
 are effective for this task.
 
@@ -419,7 +421,7 @@ python BestModel/train.py --model roberta-large \
                           --patience 3
 \end{verbatim}
 
-Repository link: \url{https://github.com/TODO/NLP}
+Repository link: \url{https://github.com/yuhanwang14/NLP-Coursework}
 
 
 \newpage
@@ -446,8 +448,8 @@ Prediction files:
 \toprule
 \textbf{Model} & \textbf{Dev F1} & \textbf{Test F1} \\
 \midrule
-Baseline (RoBERTa-base) & 0.480 & 0.490 \\
-\textbf{Our model (RoBERTa-large)} & \textbf{0.575} & \textbf{TBD}$^*$ \\
+Baseline (RoBERTa-base) & 0.460 & 0.490 \\
+\textbf{Our model (RoBERTa-large)} & \textbf{0.5747} & \textbf{TBD}$^*$ \\
 \bottomrule
 \end{tabular}
 
@@ -516,11 +518,11 @@ categorise the failure modes:
     \label{fig:comparison}
 \end{figure}
 
-The comparison reveals that the majority of examples are correctly
-classified by both models (``Both correct''). Critically, the number of
-cases where our model is correct and the baseline is wrong substantially
-exceeds the reverse, confirming the improvement is genuine and
-broad-based rather than coming from a few lucky predictions.
+The comparison reveals that 1,659 examples are correctly classified by
+both models. Critically, our model corrects 250 baseline errors while
+only introducing 57 regressions---a 4.4:1 ratio of fixes to regressions,
+confirming the improvement is genuine and broad-based rather than coming
+from a few lucky predictions. 128 examples remain misclassified by both.
 
 % ── 5.2.4: Precision-Recall Curve ───────────────────────────────────────────
 \subsubsection{Precision-Recall Curve and Threshold Optimisation}
@@ -567,8 +569,8 @@ targeted data augmentation for under-performing groups.
 \label{sec:ex6}
 
 \begin{itemize}[leftmargin=*]
-    \item \textbf{Repository:} \url{https://github.com/TODO/NLP}
-    \item \textbf{Leaderboard name:} \texttt{TODO\_LEADERBOARD}
+    \item \textbf{Repository:} \url{https://github.com/yuhanwang14/NLP-Coursework}
+    \item \textbf{Leaderboard name:} \texttt{YOUR\_NAME\_HERE}
     \item The repository contains a clear \texttt{README.md} with
           reproduction instructions, well-structured code in
           \texttt{BestModel/}, and documented EDA and evaluation scripts.
